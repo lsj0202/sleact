@@ -2,11 +2,13 @@ import { Success, Form, Error, Label, Input, LinkContainer, Button, Header } fro
 import React, { useCallback, useState } from 'react';
 import { Link, Redirect } from 'react-router-dom';
 import useInput from '@hooks/useInput';
+import axios from 'axios';
 
 const LogIn = () => {
   const [email, onChangeEmail] = useInput('');
   const [nickname, onChangeNickname] = useInput('');
   const [password, setPassword] = useState('');
+  const [signUpError, setSignUpError] = useState('');
   const [signUpSuccess, setSignUpSuccess] = useState(false);
   const [passwordCheck, setPasswordCheck] = useState('');
   const [mismatchError, setMismatchError] = useState(false);
@@ -31,9 +33,24 @@ const LogIn = () => {
     (e) => {
       e.preventDefault();
       console.log(email, nickname, password, passwordCheck);
-      if (!mismatchError) {
+      if (!mismatchError && nickname) {
         if (password.length >= 5) {
-          setSignUpSuccess(true);
+          setSignUpError(''); // 요청시 에러메시지 초기화
+          axios
+            .post('http://localhost:3095/api/users', {
+              email,
+              nickname,
+              password,
+            })
+            .then((res) => {
+              setSignUpSuccess(true);
+              console.log(res.data);
+            })
+            .catch((error) => {
+              setSignUpError(error.response.data);
+              console.log(error.message);
+            });
+          // .finally(() => {});
         } else {
           alert('비밀번호는 5글자 이상이어야 합니다.');
         }
@@ -77,6 +94,7 @@ const LogIn = () => {
           </div>
           {mismatchError && <Error>비밀번호가 일치하지 않습니다.</Error>}
           {!nickname && <Error>닉네임을 입력해주세요.</Error>}
+          {signUpError && <Error>{signUpError}</Error>}
           {signUpSuccess && <Success>회원가입되었습니다! 로그인해주세요.</Success>}
         </Label>
         <Button type="submit">회원가입</Button>
